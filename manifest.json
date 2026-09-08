@@ -1,0 +1,8 @@
+{
+  "plugin": "InteractifLive.PlanetCrafter",
+  "version": "0.2.0",
+  "tag": "v0.2.0",
+  "asset": "InteractifLive.PlanetCrafter.dll",
+  "download_url": "https://github.com/ecrasor-spec/interactif-live-planet-crafter/releases/download/v0.2.0/InteractifLive.PlanetCrafter.dll",
+  "checksum_sha256": ""
+}
