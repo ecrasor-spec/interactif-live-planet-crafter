@@ -41,7 +41,10 @@ Les signatures internes du jeu peuvent changer après une mise à jour de The Pl
 
 - Windows x64
 - The Planet Crafter Steam
+- The Planet Crafter Xbox Game Pass PC, si l’installation autorise le modding et l’écriture dans le dossier du jeu
 - BepInEx 5 x64
+
+Le plugin ne dépend pas de Steam : il communique uniquement avec le jeu via BepInEx et le pont local. Sur Xbox Game Pass, Windows peut protéger le dossier `WindowsApps` ; dans ce cas il faut utiliser le dossier de jeu modifiable proposé par l’application Xbox ou sélectionner une installation autorisée.
 
 Après une mise à jour majeure du jeu, utiliser **Vérifier les mises à jour** dans Interactif Live avant de relancer un live.
 
