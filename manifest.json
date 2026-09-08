@@ -1,8 +1,11 @@
 {
   "plugin": "InteractifLive.PlanetCrafter",
-  "version": "0.2.0",
-  "tag": "v0.2.0",
+  "version": "0.3.0",
+  "tag": "v0.3.0",
   "asset": "InteractifLive.PlanetCrafter.dll",
-  "download_url": "https://github.com/ecrasor-spec/interactif-live-planet-crafter/releases/download/v0.2.0/InteractifLive.PlanetCrafter.dll",
-  "checksum_sha256": "5a7d3086323cebd57cec7656f152f69629f16b6ce21e7965eff8cf362e67f976"
+  "download_url": "https://github.com/ecrasor-spec/interactif-live-planet-crafter/releases/download/v0.3.0/InteractifLive.PlanetCrafter.dll",
+  "checksum_sha256": "5a7d3086323cebd57cec7656f152f69629f16b6ce21e7965eff8cf362e67f976",
+  "gamepass_asset": "InteractifLive.PlanetCrafter.GamePass.dll",
+  "gamepass_download_url": "https://github.com/ecrasor-spec/interactif-live-planet-crafter/releases/download/v0.3.0/InteractifLive.PlanetCrafter.GamePass.dll",
+  "gamepass_checksum_sha256": "98bbc13320d7deaf8782e59a903e7bb2f755deb61bcc7892931a56b8e9e79c8b"
 }
