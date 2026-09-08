@@ -35,7 +35,9 @@ Le plugin prend en charge les identifiants suivants :
 - Monde : `meteor_shower_beneficial`, `meteor_storm`, `boost_terraform`, `bad_weather`.
 - Machines et joueur : `repair_nearby_machines`, `disable_nearby_machines`, `surprise_teleport`, `slow_player`.
 
-Les signatures internes du jeu peuvent changer après une mise à jour de The Planet Crafter. Les actions incompatibles sont journalisées dans le log BepInEx sans faire crasher le jeu.
+Les signatures internes du jeu peuvent changer après une mise à jour de The Planet Crafter. Les actions actuellement garanties sont les huit actions de jauges (oxygène, eau, nourriture et santé). Les autres actions restent listées pour préserver la configuration, mais le pont renvoie explicitement une erreur `501` tant que leur mapping interne n'est pas validé, au lieu de les annoncer comme exécutées.
+
+Sur Xbox Game Pass, les actions sont placées dans une file puis exécutées sur le thread principal Unity/IL2CPP. Cela évite les échecs et crashs causés par des appels Unity depuis le thread HTTP.
 
 ## Compatibilité
 

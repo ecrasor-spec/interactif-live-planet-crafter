@@ -10,6 +10,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using UnityEngine;
 
 namespace InteractifLive.PlanetCrafter.GamePass;
 
@@ -18,11 +19,12 @@ public sealed class PluginGamePass : BasePlugin
 {
     public const string PluginGuid = "jesink.interactiflive.planet-crafter.gamepass";
     public const string PluginName = "Interactif Live - The Planet Crafter Game Pass";
-    public const string PluginVersion = "0.2.1";
+    public const string PluginVersion = "0.2.2";
     private const string Prefix = "http://127.0.0.1:18948/";
     private readonly ConcurrentQueue<string> queue = new();
     private HttpListener listener;
     private CancellationTokenSource stop;
+    private static PluginGamePass Instance;
     private static readonly HashSet<string> Allowed = new(StringComparer.OrdinalIgnoreCase)
     {
         "restore_oxygen", "restore_water", "restore_food", "restore_health",
@@ -32,16 +34,24 @@ public sealed class PluginGamePass : BasePlugin
         "meteor_storm", "bad_weather", "remove_random_item", "disable_nearby_machines",
         "surprise_teleport", "slow_player"
     };
+    private static readonly HashSet<string> Implemented = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "restore_oxygen", "restore_water", "restore_food", "restore_health",
+        "drain_oxygen", "drain_water", "drain_food", "damage_player"
+    };
 
     public override void Load()
     {
+        Instance = this;
         Log.LogInfo($"{PluginName} {PluginVersion} chargé (BepInEx 6 IL2CPP).");
         stop = new CancellationTokenSource();
         listener = new HttpListener();
         listener.Prefixes.Add(Prefix);
         listener.Start();
         _ = Task.Run(() => ListenLoop(stop.Token));
-        _ = Task.Run(() => ExecuteLoop(stop.Token));
+        // HTTP callbacks run on a worker thread. Unity/IL2CPP game objects
+        // must only be inspected or modified from Unity's main thread.
+        AddComponent<MainThreadRunner>();
         Log.LogInfo($"Pont local actif sur {Prefix}");
     }
 
@@ -69,6 +79,7 @@ public sealed class PluginGamePass : BasePlugin
                 using var reader = new StreamReader(context.Request.InputStream, context.Request.ContentEncoding);
                 var action = ReadJsonValue(reader.ReadToEnd(), "action");
                 if (!Allowed.Contains(action)) { context.Response.StatusCode = 400; body = "{\"success\":false,\"error\":\"Action inconnue\"}"; }
+                else if (!Implemented.Contains(action)) { context.Response.StatusCode = 501; body = "{\"success\":false,\"error\":\"Action non encore compatible avec cette version IL2CPP\"}"; }
                 else { queue.Enqueue(action); body = $"{{\"success\":true,\"accepted\":true,\"action\":\"{Escape(action)}\"}}"; }
             }
             else { context.Response.StatusCode = 404; body = "{\"success\":false,\"error\":\"Route inconnue\"}"; }
@@ -77,16 +88,12 @@ public sealed class PluginGamePass : BasePlugin
         catch (Exception ex) { Log.LogWarning($"Requête refusée : {ex.Message}"); try { context.Response.StatusCode = 500; context.Response.Close(); } catch { } }
     }
 
-    private async Task ExecuteLoop(CancellationToken token)
+    private void ProcessQueuedActions()
     {
-        while (!token.IsCancellationRequested)
+        while (queue.TryDequeue(out var action))
         {
-            while (queue.TryDequeue(out var action))
-            {
-                try { Log.LogInfo($"Action {action} reçue : {ExecuteAction(action)}"); }
-                catch (Exception ex) { Log.LogWarning($"Action {action} non exécutée : {ex.Message}"); }
-            }
-            await Task.Delay(250, token);
+            try { Log.LogInfo($"Action {action} reçue : {ExecuteAction(action)}"); }
+            catch (Exception ex) { Log.LogWarning($"Action {action} non exécutée : {ex.Message}"); }
         }
     }
 
@@ -120,4 +127,12 @@ public sealed class PluginGamePass : BasePlugin
     private static IEnumerable<Type> SafeTypes(Assembly assembly) { try { return assembly.GetTypes(); } catch (ReflectionTypeLoadException ex) { return ex.Types.Where(t => t != null); } catch { return Array.Empty<Type>(); } }
     private static string ReadJsonValue(string body, string key) { var marker = "\"" + key + "\""; var start = body.IndexOf(marker, StringComparison.OrdinalIgnoreCase); if (start < 0) return ""; start = body.IndexOf(':', start); start = body.IndexOf('"', start); var end = body.IndexOf('"', start + 1); return end > start ? body.Substring(start + 1, end - start - 1) : ""; }
     private static string Escape(string value) => (value ?? "").Replace("\\", "\\\\").Replace("\"", "\\\"");
+
+    private sealed class MainThreadRunner : MonoBehaviour
+    {
+        private void Update()
+        {
+            Instance?.ProcessQueuedActions();
+        }
+    }
 }

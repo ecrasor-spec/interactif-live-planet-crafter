@@ -32,6 +32,11 @@ public sealed class Plugin : BaseUnityPlugin
         "meteor_storm", "bad_weather", "remove_random_item", "disable_nearby_machines",
         "surprise_teleport", "slow_player"
     };
+    private static readonly HashSet<string> ImplementedActions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "restore_oxygen", "restore_water", "restore_food", "restore_health",
+        "drain_oxygen", "drain_water", "drain_food", "damage_player"
+    };
 
     public void Awake()
     {
@@ -84,6 +89,11 @@ public sealed class Plugin : BaseUnityPlugin
                 {
                     context.Response.StatusCode = 400;
                     body = "{\"success\":false,\"error\":\"Action Planet Crafter inconnue ou non autorisée\"}";
+                }
+                else if (!ImplementedActions.Contains(payload.Action ?? ""))
+                {
+                    context.Response.StatusCode = 501;
+                    body = "{\"success\":false,\"error\":\"Action non encore compatible avec cette version Mono\"}";
                 }
                 else
                 {
