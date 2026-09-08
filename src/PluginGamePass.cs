@@ -1,5 +1,6 @@
 using BepInEx;
 using BepInEx.Unity.IL2CPP;
+using HarmonyLib;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -18,15 +19,18 @@ public sealed class PluginGamePass : BasePlugin
 {
     public const string PluginGuid = "jesink.interactiflive.planet-crafter.gamepass";
     public const string PluginName = "Interactif Live - The Planet Crafter Game Pass";
-    public const string PluginVersion = "0.3.5";
+    public const string PluginVersion = "0.3.8";
     private const string Prefix = "http://127.0.0.1:18948/";
     private readonly ConcurrentQueue<string> queue = new();
     private HttpListener listener;
     private CancellationTokenSource stop;
+    private Harmony harmony;
+    private static readonly ConcurrentQueue<string> mainThreadPending = new();
+    private static PluginGamePass instance;
     private static readonly HashSet<string> Allowed = new(StringComparer.OrdinalIgnoreCase)
     {
-        "restore_oxygen", "restore_water", "restore_food", "restore_health",
-        "drain_oxygen", "drain_water", "drain_food", "damage_player",
+        "restore_oxygen", "restore_water", "restore_health",
+        "drain_oxygen", "drain_water", "damage_player",
         "deliver_random_resources", "trigger_random_event",
         "give_random_item", "give_random_items_5", "give_random_items_10",
         "meteor_shower_beneficial", "boost_terraform", "repair_nearby_machines",
@@ -35,13 +39,15 @@ public sealed class PluginGamePass : BasePlugin
     };
     private static readonly HashSet<string> Implemented = new(StringComparer.OrdinalIgnoreCase)
     {
-        "restore_oxygen", "restore_water", "restore_food", "restore_health",
-        "drain_oxygen", "drain_water", "drain_food", "damage_player"
+        "restore_oxygen", "restore_water", "restore_health",
+        "drain_oxygen", "drain_water", "damage_player"
     };
 
     public override void Load()
     {
         Log.LogInfo($"{PluginName} {PluginVersion} chargé (BepInEx 6 IL2CPP).");
+        instance = this;
+        InstallMainThreadPatch();
         stop = new CancellationTokenSource();
         listener = new HttpListener();
         listener.Prefixes.Add(Prefix);
@@ -90,10 +96,39 @@ public sealed class PluginGamePass : BasePlugin
         {
             while (queue.TryDequeue(out var action))
             {
-                try { Log.LogInfo($"Action {action} reçue : {ExecuteAction(action)}"); }
-                catch (Exception ex) { Log.LogWarning($"Action {action} non exécutée : {ex.Message}"); }
+                mainThreadPending.Enqueue(action);
             }
             await Task.Delay(250, token);
+        }
+    }
+
+    private void InstallMainThreadPatch()
+    {
+        var managers = FindType("PlayersManager");
+        var update = managers?.GetMethod("Update", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+        var hookName = "PlayersManager.Update";
+        if (update == null)
+        {
+            managers = FindType("Managers");
+            update = managers?.GetMethod("UpdateManagers", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+            hookName = "Managers.UpdateManagers";
+        }
+        if (update == null)
+        {
+            Log.LogWarning("Hook Unity de mise à jour introuvable : les actions ne seront pas exécutées.");
+            return;
+        }
+        harmony = new Harmony(PluginGuid);
+        harmony.Patch(update, postfix: new HarmonyMethod(typeof(PluginGamePass), nameof(ProcessMainThreadQueue)));
+        Log.LogInfo($"Dispatcher Unity installé via {hookName}.");
+    }
+
+    private static void ProcessMainThreadQueue()
+    {
+        while (mainThreadPending.TryDequeue(out var action))
+        {
+            try { instance.Log.LogInfo($"Action {action} reçue : {instance.ExecuteAction(action)}"); }
+            catch (Exception ex) { instance.Log.LogWarning($"Action {action} non exécutée : {ex.Message}"); }
         }
     }
 
@@ -213,7 +248,7 @@ public sealed class PluginGamePass : BasePlugin
                 var items = Invoke(manager, name) as System.Collections.IEnumerable;
                 if (items == null) continue;
                 var list = items.Cast<object>().Where(item => item != null).ToList();
-                if (list.Count > 0) return list[new Random().Next(list.Count)];
+                if (list.Count > 0) return list[new System.Random().Next(list.Count)];
             }
             catch { }
         }

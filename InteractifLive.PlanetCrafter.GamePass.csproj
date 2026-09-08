@@ -12,5 +12,6 @@
     <Compile Include="src\PluginGamePass.cs" />
     <Reference Include="BepInEx.Core"><HintPath>$(BepInEx6Dir)\BepInEx.Core.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="BepInEx.Unity.IL2CPP"><HintPath>$(BepInEx6Dir)\BepInEx.Unity.IL2CPP.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="0Harmony"><HintPath>$(BepInEx6Dir)\0Harmony.dll</HintPath><Private>false</Private></Reference>
   </ItemGroup>
 </Project>
