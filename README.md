@@ -4,7 +4,7 @@ Plugin BepInEx pour relier **The Planet Crafter** à Interactif Live et aux év�
 
 ## Installation
 
-1. Installer BepInEx 5 x64 dans le dossier de The Planet Crafter.
+1. Pour Steam, installer BepInEx 5 x64. Pour Xbox Game Pass, installer BepInEx 6 IL2CPP x64 build 785.
 2. Lancer le jeu une fois puis le fermer.
 3. Copier `InteractifLive.PlanetCrafter.dll` dans :
 
@@ -31,11 +31,11 @@ Le pont n’accepte que les identifiants d’actions définis par Interactif Liv
 Le plugin prend en charge les identifiants suivants :
 
 - Survie : `restore_oxygen`, `restore_water`, `restore_food`, `restore_health`, `drain_oxygen`, `drain_water`, `drain_food`, `damage_player`.
-- Objets : `give_random_item`, `give_random_items_5`, `give_random_items_10`, `remove_random_item`.
-- Monde : `meteor_shower_beneficial`, `meteor_storm`, `boost_terraform`, `bad_weather`.
+- Objets : `deliver_random_resources` (ressource aléatoire débloquée).
+- Monde : `trigger_random_event` (événement ou interaction aléatoire).
 - Machines et joueur : `repair_nearby_machines`, `disable_nearby_machines`, `surprise_teleport`, `slow_player`.
 
-Les signatures internes du jeu peuvent changer après une mise à jour de The Planet Crafter. Les actions actuellement garanties sont les huit actions de jauges (oxygène, eau, nourriture et santé). Les autres actions restent listées pour préserver la configuration, mais le pont renvoie explicitement une erreur `501` tant que leur mapping interne n'est pas validé, au lieu de les annoncer comme exécutées.
+Les signatures internes du jeu peuvent changer après une mise à jour de The Planet Crafter. Les huit actions de jauges restent garanties. Les deux nouvelles actions utilisent un mapping IL2CPP strict : l’inventaire doit exposer une méthode d’ajout explicite et l’événement doit correspondre à une méthode sans paramètre connue. Si le mapping n’est pas trouvé, le pont renvoie une erreur `501` au lieu d’annoncer une fausse exécution ou d’appeler une méthode arbitraire.
 
 Sur Xbox Game Pass, le plugin reste volontairement sans injection de `MonoBehaviour` supplémentaire : cette injection peut provoquer un crash IL2CPP sur certaines versions de Planet Crafter. Les actions non mappées sont refusées explicitement tant qu’un appel interne sûr n’a pas été validé.
 
