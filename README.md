@@ -37,7 +37,7 @@ Le plugin prend en charge les identifiants suivants :
 
 Les signatures internes du jeu peuvent changer après une mise à jour de The Planet Crafter. Les actions actuellement garanties sont les huit actions de jauges (oxygène, eau, nourriture et santé). Les autres actions restent listées pour préserver la configuration, mais le pont renvoie explicitement une erreur `501` tant que leur mapping interne n'est pas validé, au lieu de les annoncer comme exécutées.
 
-Sur Xbox Game Pass, les actions sont placées dans une file puis exécutées sur le thread principal Unity/IL2CPP. Cela évite les échecs et crashs causés par des appels Unity depuis le thread HTTP.
+Sur Xbox Game Pass, le plugin reste volontairement sans injection de `MonoBehaviour` supplémentaire : cette injection peut provoquer un crash IL2CPP sur certaines versions de Planet Crafter. Les actions non mappées sont refusées explicitement tant qu’un appel interne sûr n’a pas été validé.
 
 ## Compatibilité
 
