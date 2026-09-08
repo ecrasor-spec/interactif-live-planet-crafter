@@ -18,7 +18,7 @@ public sealed class PluginGamePass : BasePlugin
 {
     public const string PluginGuid = "jesink.interactiflive.planet-crafter.gamepass";
     public const string PluginName = "Interactif Live - The Planet Crafter Game Pass";
-    public const string PluginVersion = "0.3.4";
+    public const string PluginVersion = "0.3.5";
     private const string Prefix = "http://127.0.0.1:18948/";
     private readonly ConcurrentQueue<string> queue = new();
     private HttpListener listener;
@@ -36,8 +36,7 @@ public sealed class PluginGamePass : BasePlugin
     private static readonly HashSet<string> Implemented = new(StringComparer.OrdinalIgnoreCase)
     {
         "restore_oxygen", "restore_water", "restore_food", "restore_health",
-        "drain_oxygen", "drain_water", "drain_food", "damage_player",
-        "deliver_random_resources", "trigger_random_event"
+        "drain_oxygen", "drain_water", "drain_food", "damage_player"
     };
 
     public override void Load()
@@ -110,8 +109,12 @@ public sealed class PluginGamePass : BasePlugin
             case "drain_water": AddGauge("AddWater", -100); return "eau réduite";
             case "drain_food": AddGauge("AddFood", -100); return "nourriture réduite";
             case "damage_player": AddGauge("AddHealth", -25); return "dégâts appliqués";
-            case "deliver_random_resources": return DeliverRandomResources();
-            case "trigger_random_event": return TriggerRandomEvent();
+            // Ces deux actions restent visibles dans le catalogue pour garder
+            // les réglages, mais elles sont volontairement bloquées tant qu'un
+            // dispatch Unity sur le thread principal n'est pas disponible.
+            // Les appeler depuis le thread HTTP peut faire planter coreclr.dll.
+            case "deliver_random_resources": throw new InvalidOperationException("Action désactivée : dispatch Unity thread principal non validé");
+            case "trigger_random_event": throw new InvalidOperationException("Action désactivée : dispatch Unity thread principal non validé");
             default: return "reçue ; mapping IL2CPP de cette action à finaliser";
         }
     }

@@ -35,7 +35,7 @@ Le plugin prend en charge les identifiants suivants :
 - Monde : `trigger_random_event` (événement ou interaction aléatoire).
 - Machines et joueur : `repair_nearby_machines`, `disable_nearby_machines`, `surprise_teleport`, `slow_player`.
 
-Les signatures internes du jeu peuvent changer après une mise à jour de The Planet Crafter. Les huit actions de jauges restent garanties. Les deux nouvelles actions utilisent un mapping IL2CPP strict : l’inventaire doit exposer une méthode d’ajout explicite et l’événement doit correspondre à une méthode sans paramètre connue. Si le mapping n’est pas trouvé, le pont renvoie une erreur `501` au lieu d’annoncer une fausse exécution ou d’appeler une méthode arbitraire.
+Les signatures internes du jeu peuvent changer après une mise à jour de The Planet Crafter. Les huit actions de jauges restent les seules actions actives tant qu’un dispatch Unity sur le thread principal n’est pas validé. Les deux nouvelles actions sont conservées dans le catalogue mais refusées en `501` : les appeler depuis le thread HTTP provoque un risque de crash `coreclr.dll` sur Game Pass. Elles seront réactivées uniquement après validation d’un dispatcher Unity sûr.
 
 Sur Xbox Game Pass, le plugin reste volontairement sans injection de `MonoBehaviour` supplémentaire : cette injection peut provoquer un crash IL2CPP sur certaines versions de Planet Crafter. Les actions non mappées sont refusées explicitement tant qu’un appel interne sûr n’a pas été validé.
 
